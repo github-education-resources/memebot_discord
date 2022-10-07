@@ -6,6 +6,7 @@
     "build": "rm -rf build && esbuild src/*.js src/**/*.js --platform=node --format=cjs  --outdir=build --outbase=src",
     "start": "npm run build && node -r dotenv/config build/app.js",
     "dev": "nodemon",
+    "prod": "node build/app.js",
     "test": "mocha -r esbuild-runner/register ./tests/*.spec.js --exit"
   },
   "keywords": [
