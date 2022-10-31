@@ -66,4 +66,5 @@ Visit the generated url from the previous step and choose the server that you wa
 
 Once the bot is added it will appear on your Discord server in offline mode.
 You can now run the code in the repository to activate your bot. 
-<NEED Node instructtions to run>
+
+run the command `npm start` to run this project.
