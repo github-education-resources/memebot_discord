@@ -16,11 +16,18 @@ This template repository requires a `.env` file to pass variables to your applic
 
 This template repository has a sample .env file, `.env-sample`, that you can rename to `.env` or copy and paste the variables in `.env-sample` into a new `.env` file. 
 
-### Step 2: Add your favorite meme API
-In your `.env` file you will find a variable named `MEME_API_URL` where you can add a URL to your favorite meme API endpoint that generates random memes. You can search for a random meme generator API on GitHub or your favorite search engine.
+### Step 2: Add your favorite meme
+In your `.env` file you will find a variable named `MEME_URL` where you can add a URL to your favorite meme. 
 
-### Step 3 (optional): Customize even further
-Maybe you want to pick your own memes or use an API service that requires a token. No matter what route you choose, you should take this Discord bot and make it your own. :smiley:
+### Step 3: Add a personalized welcome message
+In the `src` directory you will find another directory called `events`. Open the `events` directory and you will find the `guildMemberAdd.js` file. You'll notice that we left helpful comments on where you can update the code to your liking.
+
+To add a welcome message, you can update the `getWelcomeMessage` function after the `content:` keyword.
+
+![code block of get welcome message function](https://user-images.githubusercontent.com/10368374/199597840-dd83efa6-8251-4def-868f-cdadb0df6f02.png)
+
+### Step 4 (optional): Customize even further
+Maybe you want to use an API service to provide random memes or maybe you don't want to share a meme at all. No matter what route you choose, you should take this Discord bot and make it your own. :smiley:
 
 We recommend [creating a new branch](https://docs.github.com/en/desktop/contributing-and-collaborating-using-github-desktop/making-changes-in-a-branch/managing-branches#creating-a-branch) anytime you tinker so you don't have to worry about making mistakes on your main branch. Once your new branch is in a good state, you can [merge your changes](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/about-pull-request-merges) to your main branch using a pull request. :rocket:
 
@@ -65,6 +72,7 @@ Visit the generated url from the previous step and choose the server that you wa
 ### Step 6: Run your application
 
 Once the bot is added it will appear on your Discord server in offline mode.
-You can now run the code in the repository to activate your bot. 
 
-run the command `npm start` to run this project.
+You can now run the code in the repository using the command line by typing the command `npm start`. 
+
+
