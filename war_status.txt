@@ -1,0 +1,15 @@
+{
+  "automatonKills": 16438006420,
+  "bulletsFired": 317620243976,
+  "bulletsHit": 352960003627,
+  "deaths": 1476926666,
+  "friendlies": 200511351,
+  "illuminateKills": 28,
+  "missionSuccessRate": 90,
+  "missionTime": 557200811279,
+  "missionsLost": 25633476,
+  "missionsWon": 239537607,
+  "playerCount": 51396,
+  "terminidKills": 40584979707,
+  "updatetime": "05-29-2024- 14:21:32"
+}

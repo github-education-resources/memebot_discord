@@ -1,0 +1,166 @@
+"""
+The MIT License (MIT)
+
+Copyright (c) 2015-present Rapptz
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+"""
+
+from __future__ import annotations
+from typing import Callable, ClassVar, Coroutine, Dict, Generic, Optional, Tuple, Type, TypeVar, TYPE_CHECKING, Any, Union
+import inspect
+import re
+
+from .item import Item
+from ..utils import is_inside_class
+from .._types import ClientT
+
+__all__ = ()
+
+BaseT = TypeVar('BaseT', bound='Item[Any]')
+Coro = Coroutine[Any, Any, Any]
+
+if TYPE_CHECKING:
+    from typing_extensions import TypeVar, Self
+    from ..interactions import Interaction
+    from ..components import Component
+    from ..enums import ComponentType
+    from .view import View
+
+    V = TypeVar('V', bound='View', covariant=True, default=View)
+else:
+    V = TypeVar('V', bound='View', covariant=True)
+
+
+class DynamicItem(Generic[BaseT, V], Item[V]):
+    """Represents an item with a dynamic ``custom_id`` that can be used to store state within
+    that ``custom_id``.
+
+    The ``custom_id`` parsing is done using the ``re`` module by passing a ``template``
+    parameter to the class parameter list.
+
+    .. versionadded:: 2.2
+
+    Parameters
+    ------------
+    item: :class:`Item`
+        The item to wrap with dynamic custom ID parsing.
+    template: Union[:class:`str`, :class:`re.Pattern`]
+        The template to use for parsing the ``custom_id``. This can be a string or a compiled
+        regular expression. This must be passed as a keyword argument to the class creation.
+    row: Optional[:class:`int`]
+        The relative row this button belongs to. A Discord component can only have 5
+        rows. By default, items are arranged automatically into those 5 rows. If you'd
+        like to control the relative positioning of the row then passing an index is advised.
+        For example, row=1 will show up before row=2. Defaults to ``None``, which is automatic
+        ordering. The row number must be between 0 and 4 (i.e. zero indexed).
+
+    Attributes
+    -----------
+    item: :class:`Item`
+        The item that is wrapped with dynamic custom ID parsing.
+    template: :class:`re.Pattern`
+        The compiled regular expression that is used to parse the ``custom_id``.
+    """
+
+    __item_repr_attributes__: Tuple[str, ...] = (
+        'item',
+        'template',
+    )
+
+    __discord_ui_compiled_template__: ClassVar[re.Pattern[str]]
+
+    def __init_subclass__(cls, *, template: Union[str, re.Pattern[str]]) -> None:
+        super().__init_subclass__()
+        cls.__discord_ui_compiled_template__ = re.compile(template) if isinstance(template, str) else template
+
+    def __init__(
+        self,
+        item: BaseT,
+        *,
+        row: Optional[int] = None,
+    ) -> None:
+        super().__init__()
+        self.row = row
+        self.item: BaseT = item
+
+    @property
+    def template(self) -> re.Pattern[str]:
+        """:class:`re.Pattern`: The compiled regular expression that is used to parse the ``custom_id``."""
+        return self.__class__.__discord_ui_compiled_template__
+
+    def to_component_dict(self) -> Dict[str, Any]:
+        return self.item.to_component_dict()
+
+    def _refresh_component(self, component: Component) -> None:
+        self.item._refresh_component(component)
+
+    def _refresh_state(self, interaction: Interaction, data: Dict[str, Any]) -> None:
+        self.item._refresh_state(interaction, data)
+
+    @classmethod
+    def from_component(cls: Type[Self], component: Component) -> Self:
+        raise TypeError('Dynamic items cannot be created from components')
+
+    @property
+    def type(self) -> ComponentType:
+        return self.item.type
+
+    def is_dispatchable(self) -> bool:
+        return self.item.is_dispatchable()
+
+    @property
+    def row(self) -> Optional[int]:
+        return self._row
+
+    @row.setter
+    def row(self, value: Optional[int]) -> None:
+        super().row = value
+        self.item.row = value
+
+    @property
+    def width(self) -> int:
+        return self.item.width
+
+    @classmethod
+    async def from_custom_id(cls: Type[Self], interaction: Interaction[ClientT], match: re.Match[str], /) -> Self:
+        """|coro|
+
+        A classmethod that is called when the ``custom_id`` of a component matches the
+        ``template`` of the class. This is called when the component is dispatched.
+
+        It must return a new instance of the :class:`DynamicItem`.
+
+        Subclasses *must* implement this method.
+
+        Parameters
+        ------------
+        interaction: :class:`Interaction`
+            The interaction that the component belongs to.
+        match: :class:`re.Match`
+            The match object that was created from the ``template``
+            matching the ``custom_id``.
+
+        Returns
+        --------
+        :class:`DynamicItem`
+            The new instance of the :class:`DynamicItem` with information
+            from the ``match`` object.
+        """
+        raise NotImplementedError
