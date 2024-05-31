@@ -2,28 +2,43 @@ import requests
 import json
 from datetime import datetime
 import os
+import ast
+from dotenv import load_dotenv
+from azure.cosmos import CosmosClient
+import re
 
-#from dotenv import load_dotenv
+#load keys
+load_dotenv()
+db_uri = os.getenv('account_uri')
+db_key = os.getenv('account_key')
+headers = ast.literal_eval(os.getenv('header1'))
 
-#https://helldivers-2.github.io/api/docs/openapi/swagger-ui.html
+#create db connection
+client = CosmosClient(url=db_uri, credential=db_key)
+database_name = 'democracy_bot'
+database = client.get_database_client(database_name)
+container_name = 'dispatch'
+container = database.get_container_client(container_name)
 
-now = datetime.now()
-dt_string = now.strftime("%m%d%Y%H%M%S")
-dt_formatted = now.strftime("%m-%d-%Y- %H:%M:%S")
-
-
+#connect to api
 session = requests.Session()
-session.headers.update({'X-Super-Client': 'Democracy Bot','X-Super-Contact': 'gannonshanley@gmail.com'})
+session.headers.update(headers)
 response = session.get("https://api.helldivers2.dev//api/v1/dispatches")
-
 data = response.json()
-'''stats = data['statistics']
-stats['updatetime'] = dt_formatted
-stats_final = {key: value for key,value in stats.items() if key not in ['revives','timePlayed','accuracy',]}
 
-#war_status = requests.get("https://api.helldivers2.dev")
-#war_status = requests.get("https://helldiverstrainingmanual.com/api/v1/war/status")'''
+#format for the database
+for item in data:
+    item['id'] = str(item['id'])
+    item['/id'] = item['id']
+    item['message'] = re.sub('<i=\d>|</i>', '**', item['message'])
 
-'''with open('dispatches.txt', 'w') as file:
-    json_string = json.dumps(data, default=lambda o: o.__dict__, sort_keys=True, indent=2)
-    file.write(json_string)'''
+#queries for last uploaded id
+for item in container.query_items(
+        query='SELECT c.id as id FROM dispatch c ORDER BY c.id DESC OFFSET 0 LIMIT 1',
+        enable_cross_partition_query=True):
+    lastid = item
+
+#inserts new items into db
+for item in data:
+    if int(item['id']) > int(lastid['id']):
+        container.upsert_item(item)
